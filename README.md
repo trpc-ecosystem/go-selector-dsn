@@ -1,6 +1,13 @@
+English | [中文](README.zh_CN.md)
+
 # Data Source Name Selector
 
-English | [简体中文](./README-zh.md)
+[![Go Reference](https://pkg.go.dev/badge/github.com/trpc-ecosystem/go-selector-dsn.svg)](https://pkg.go.dev/github.com/trpc-ecosystem/go-selector-dsn)
+[![Go Report Card](https://goreportcard.com/badge/trpc.group/trpc-go/trpc-naming-polarismesh)](https://goreportcard.com/report/trpc.group/trpc-go/trpc-naming-polarismesh)
+[![LICENSE](https://img.shields.io/badge/license-Apache--2.0-green.svg)](https://github.com/trpc-ecosystem/go-selector-dsn/blob/main/LICENSE)
+[![Releases](https://img.shields.io/github/release/trpc-ecosystem/go-selector-dsn.svg?style=flat-square)](https://github.com/trpc-ecosystem/go-selector-dsn/releases)
+[![Tests](https://github.com/trpc-ecosystem/go-selector-dsn/actions/workflows/prc.yml/badge.svg)](https://github.com/trpc-ecosystem/go-selector-dsn/actions/workflows/prc.yml)
+[![Coverage](https://codecov.io/gh/trpc-ecosystem/go-selector-dsn/branch/main/graph/badge.svg)](https://app.codecov.io/gh/trpc-ecosystem/go-selector-dsn/tree/main)
 
 DSN(Data Source Name) Selector implements a selector for tRPC-Go, which uses the client's target as a data source name , and returns it in the Node's Address
 
@@ -9,7 +16,7 @@ DSN(Data Source Name) Selector implements a selector for tRPC-Go, which uses the
 client:                                            # backend-config for client
   service:                                         # backend's config
     - name: trpc.dsn.xxx.xxx         
-      target: dsn://user:passwd@tcp(ip:port)/db      # select retruns the address after "://"
+      target: dsn://user:passwd@tcp(ip:port)/db      # select returns the address after "://"
     - name: trpc.dsn.xxx.xxx1         
       # dsn+polaris means that the host in target will be resolved by polaris, and the actual address will be replaced 
       # after the host, and the part after "://" will be returned
