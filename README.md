@@ -16,7 +16,7 @@ DSN(Data Source Name) Selector implements a selector for tRPC-Go, which uses the
 client:                                            # backend-config for client
   service:                                         # backend's config
     - name: trpc.dsn.xxx.xxx         
-      target: dsn://user:passwd@tcp(ip:port)/db      # select retruns the address after "://"
+      target: dsn://user:passwd@tcp(ip:port)/db      # select returns the address after "://"
     - name: trpc.dsn.xxx.xxx1         
       # dsn+polaris means that the host in target will be resolved by polaris, and the actual address will be replaced 
       # after the host, and the part after "://" will be returned
