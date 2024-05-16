@@ -36,28 +36,45 @@ func (e *URIHostExtractor) Extract(uri string) (int, int, error) {
 
 	//  resolve end-part of the host
 	begin := offset
-	length := len(uri)
-	if idx := strings.IndexAny(uri, "/?@"); idx != -1 {
-		if uri[idx] == '@' {
-			return 0, 0, errors.New("parse host from uri: unescaped @ sign in user info")
-		}
-		if uri[idx] == '?' {
-			return 0, 0, errors.New("parse host from uri: must have a / before the query ?")
-		}
-		length = idx
+	length, err := dealHostEndPart(uri)
+	if err != nil {
+		return 0, 0, err
 	}
 	uri = uri[0:length]
 
 	return e.dealProtocolToken(uri, begin, length)
 }
 
+func dealHostEndPart(uri string) (int, error) {
+	length := len(uri)
+	if idx := strings.IndexAny(uri, "/?@"); idx != -1 {
+		if uri[idx] == '@' {
+			return 0, errors.New("parse host from uri: unescaped @ sign in user info")
+		}
+		if uri[idx] == '?' {
+			return 0, errors.New("parse host from uri: must have a / before the query ?")
+		}
+		length = idx
+	}
+	return length, nil
+}
+
 func (e *URIHostExtractor) dealProtocolToken(uri string, begin, length int) (int, int, error) {
-	if strings.HasPrefix(uri, "tcp(") {
-		begin += 4
-		length -= 4
-	}
-	if strings.HasSuffix(uri, ")") {
-		length--
-	}
+	begin, length = dealProtocolPrefix(uri, begin, length)
+	length = dealProtocolSuffix(uri, length)
 	return begin, length, nil
+}
+
+func dealProtocolPrefix(uri string, begin, length int) (int, int) {
+	if strings.HasPrefix(uri, "tcp(") {
+		return begin + 4, length - 4
+	}
+	return begin, length
+}
+
+func dealProtocolSuffix(uri string, length int) int {
+	if strings.HasSuffix(uri, ")") {
+		return length - 1
+	}
+	return length
 }
