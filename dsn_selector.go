@@ -17,6 +17,7 @@ package dsn
 import (
 	"errors"
 	"fmt"
+	"net"
 	"sync"
 	"time"
 
@@ -32,12 +33,27 @@ func init() {
 }
 
 // DefaultSelector dsn default selector
-var DefaultSelector = &DsnSelector{dsns: make(map[string]*registry.Node)}
+var DefaultSelector = NewDsnSelector(false)
+
+// NewDsnSelector creates a new dsn selector.
+func NewDsnSelector(keepAddrUnresolved bool) *DsnSelector {
+	var parseAddr func(network, address string) net.Addr
+	if keepAddrUnresolved {
+		parseAddr = func(network, address string) net.Addr {
+			return unresolvedAddr{network: network, address: address}
+		}
+	}
+	return &DsnSelector{
+		parseAddr: parseAddr,
+		dsns:      make(map[string]*registry.Node),
+	}
+}
 
 // DsnSelector returns original service name node, with memory cache
 type DsnSelector struct {
-	dsns map[string]*registry.Node
-	lock sync.RWMutex
+	parseAddr func(network, address string) net.Addr
+	dsns      map[string]*registry.Node
+	lock      sync.RWMutex
 }
 
 // Select selects address from dsn://user:passwd@tcp(ip:port)/db
@@ -60,6 +76,7 @@ func (s *DsnSelector) Select(serviceName string, opt ...selector.Option) (*regis
 	node = &registry.Node{
 		ServiceName: serviceName,
 		Address:     serviceName,
+		ParseAddr:   s.parseAddr,
 	}
 	s.dsns[serviceName] = node
 	return node, nil
@@ -70,12 +87,36 @@ func (s *DsnSelector) Report(node *registry.Node, cost time.Duration, err error)
 	return nil
 }
 
+// Options are ResolvableSelector options.
+type Options struct {
+	Extractor       ServiceNameExtractor
+	EnableParseAddr bool
+}
+
+// Option sets ResolvableSelector options.
+type Option func(*Options)
+
+// WithExtractor ...
+func WithExtractor(extractor ServiceNameExtractor) Option {
+	return func(o *Options) {
+		o.Extractor = extractor
+	}
+}
+
+// WithEnableParseAddr ...
+func WithEnableParseAddr(enable bool) Option {
+	return func(o *Options) {
+		o.EnableParseAddr = enable
+	}
+}
+
 // ResolvableSelector dsn-selector with address resolver
 type ResolvableSelector struct {
 	dsns                 map[string]*registry.Node
 	lock                 sync.RWMutex
 	resolverSelectorName string
 	extractor            ServiceNameExtractor
+	EnableParseAddr      bool
 }
 
 // ServiceNameExtractor extracts the part of the service name in the dsn, and return the starting position and length
@@ -95,6 +136,25 @@ func NewResolvableSelector(selectorName string, extractor ServiceNameExtractor) 
 		dsns:                 make(map[string]*registry.Node),
 		resolverSelectorName: selectorName,
 		extractor:            extractor,
+	}
+}
+
+// NewResolvableSelectorWithOpts ...
+func NewResolvableSelectorWithOpts(selectorName string, opt ...Option) selector.Selector {
+	opts := &Options{
+		Extractor:       &URIHostExtractor{},
+		EnableParseAddr: true,
+	}
+
+	for _, o := range opt {
+		o(opts)
+	}
+
+	return &ResolvableSelector{
+		dsns:                 make(map[string]*registry.Node),
+		resolverSelectorName: selectorName,
+		extractor:            opts.Extractor,
+		EnableParseAddr:      opts.EnableParseAddr,
 	}
 }
 
@@ -165,6 +225,13 @@ func (s *ResolvableSelector) dsnRW(address, serviceName string, resolvedNode *re
 			"resolved": resolvedNode,
 		},
 	}
+
+	if s.EnableParseAddr {
+		node.ParseAddr = func(network, address string) net.Addr {
+			return unresolvedAddr{resolvedNode.Network, resolvedNode.Address}
+		}
+	}
+
 	s.dsns[address] = node
 	return node
 }
@@ -192,4 +259,19 @@ func (s *ResolvableSelector) Report(node *registry.Node, cost time.Duration, err
 	}
 
 	return resolver.Report(resolvedNode, cost, err)
+}
+
+type unresolvedAddr struct {
+	network string
+	address string
+}
+
+// Network returns the unresolved original network.
+func (a unresolvedAddr) Network() string {
+	return a.network
+}
+
+// String returns the unresolved original address.
+func (a unresolvedAddr) String() string {
+	return a.address
 }
