@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-
+	"github.com/stretchr/testify/require"
 	"trpc.group/trpc-go/trpc-go/naming/registry"
 	"trpc.group/trpc-go/trpc-go/naming/selector"
 	dsn "trpc.group/trpc-go/trpc-selector-dsn"
@@ -140,4 +140,35 @@ func TestResolvableSelector(t *testing.T) {
 	noExtractorS := selector.Get("noextractor")
 	_, err = noExtractorS.Select("123")
 	assert.EqualError(err, "service name extractor can not be nil", "case: empty")
+}
+
+func TestUnresolvedAddress(t *testing.T) {
+	n, err := dsn.NewDsnSelector(true).Select(t.Name())
+	require.Nil(t, err)
+	require.NotNil(t, n.ParseAddr)
+	addr := n.ParseAddr(n.Network, n.Address)
+	require.Equal(t, t.Name(), addr.String())
+	require.Equal(t, "", addr.Network())
+}
+
+func TestResolvableSelectorParseAddr(t *testing.T) {
+	target := "root:root1234@tcp(127.0.0.1:3306)/redis_db?timeout=1s"
+
+	// old selector
+	n, err := dsn.NewResolvableSelector("dsn", &dsn.URIHostExtractor{}).Select(target)
+	require.Nil(t, err)
+	require.Nil(t, n.ParseAddr)
+
+	// new selector with parseaddr
+	n, err = dsn.NewResolvableSelectorWithOpts("dsn").Select(target)
+	require.Nil(t, err)
+	require.NotNil(t, n.ParseAddr)
+	addr := n.ParseAddr(n.Network, n.Address)
+	require.Equal(t, "127.0.0.1:3306", addr.String())
+	require.Equal(t, "", addr.Network())
+
+	// new selector disable parseaddr
+	n, err = dsn.NewResolvableSelectorWithOpts("dsn", dsn.WithEnableParseAddr(false)).Select(target)
+	require.Nil(t, err)
+	require.Nil(t, n.ParseAddr)
 }
