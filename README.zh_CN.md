@@ -1,6 +1,13 @@
+[English](README.md) | 中文
+
 # Data Source Name 寻址方式
 
-[English](./README.md) | 简体中文
+[![Go Reference](https://pkg.go.dev/badge/github.com/trpc-ecosystem/go-selector-dsn.svg)](https://pkg.go.dev/github.com/trpc-ecosystem/go-selector-dsn)
+[![Go Report Card](https://goreportcard.com/badge/trpc.group/trpc-go/trpc-selector-dsn)](https://goreportcard.com/report/trpc.group/trpc-go/trpc-selector-dsn)
+[![LICENSE](https://img.shields.io/badge/license-Apache--2.0-green.svg)](https://github.com/trpc-ecosystem/go-selector-dsn/blob/main/LICENSE)
+[![Releases](https://img.shields.io/github/release/trpc-ecosystem/go-selector-dsn.svg?style=flat-square)](https://github.com/trpc-ecosystem/go-selector-dsn/releases)
+[![Tests](https://github.com/trpc-ecosystem/go-selector-dsn/actions/workflows/prc.yml/badge.svg)](https://github.com/trpc-ecosystem/go-selector-dsn/actions/workflows/prc.yml)
+[![Coverage](https://codecov.io/gh/trpc-ecosystem/go-selector-dsn/branch/main/graph/badge.svg)](https://app.codecov.io/gh/trpc-ecosystem/go-selector-dsn/tree/main)
 
 实现了 tRPC-Go 的 selector 接口，将 client 的 target 当做 data source name 来使用，并在 Node 的 Address 中返回
 
